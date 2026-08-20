@@ -1,0 +1,4 @@
+#define SECRET_SSID "Airtel_Only Work"
+#define SECRET_PASS "Revenge#2231"
+#define SECRET_CH_ID 3463919
+#define SECRET_WRITE_APIKEY "X2N209NQWJPTZAUE"
