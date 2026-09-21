@@ -17,6 +17,7 @@ const unsigned long BUTTON_COOLDOWN = 500;
 
 BH1750 lightMeter;
 
+// These flags tell the main loop that an interrupt has happened.
 volatile bool pirTriggered = false;
 volatile bool buttonTriggered = false;
 
@@ -30,10 +31,12 @@ unsigned long led1StartTime = 0;
 unsigned long led2StartTime = 0;
 
 
+// Runs when the PIR detects motion.
 void pirInterrupt() {
 
   unsigned long currentTime = millis();
 
+  // Ignore repeated PIR signals within the cooldown period.
   if (currentTime - lastPirInterrupt >= PIR_COOLDOWN) {
     pirTriggered = true;
     lastPirInterrupt = currentTime;
@@ -41,10 +44,12 @@ void pirInterrupt() {
 }
 
 
+// Runs when the button is pressed.
 void buttonInterrupt() {
 
   unsigned long currentTime = millis();
 
+  // Prevent one button press from being detected multiple times.
   if (currentTime - lastButtonInterrupt >= BUTTON_COOLDOWN) {
     buttonTriggered = true;
     lastButtonInterrupt = currentTime;
@@ -52,6 +57,7 @@ void buttonInterrupt() {
 }
 
 
+// Turns both LEDs on and records when they were switched on.
 void turnLightsOn() {
 
   digitalWrite(LED1_PIN, HIGH);
@@ -65,6 +71,7 @@ void turnLightsOn() {
 }
 
 
+// Checks for motion and then checks the light level.
 void checkMotion() {
 
   if (pirTriggered == true) {
@@ -79,6 +86,7 @@ void checkMotion() {
     Serial.print(lux);
     Serial.println(" lux");
 
+    // Turn the lights on only when motion is detected in darkness.
     if (lux < DARK_THRESHOLD) {
 
       Serial.println("It is dark.");
@@ -96,6 +104,7 @@ void checkMotion() {
 }
 
 
+// Checks whether the button was pressed.
 void checkButton() {
 
   if (buttonTriggered == true) {
@@ -111,6 +120,7 @@ void checkButton() {
 }
 
 
+// Turns each LED off after its specified time.
 void checkTimers() {
 
   if (led1Active &&
@@ -139,7 +149,9 @@ void setup() {
   Serial.begin(9600);
 
   pinMode(PIR_PIN, INPUT);
-  pinMode(BUTTON_PIN, INPUT_PULLUP);       // button stays HIGH when released
+
+  // INPUT_PULLUP keeps the button HIGH until it is pressed.
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
@@ -155,17 +167,19 @@ void setup() {
     Serial.println("BH1750 not detected.");
   }
 
+  // PIR triggers the interrupt when its signal changes from LOW to HIGH.
   attachInterrupt(
     digitalPinToInterrupt(PIR_PIN),
     pirInterrupt,
     RISING
-  );                                      // PIR interrupt when signal rises
+  );
 
+  // Button triggers the interrupt when its signal changes from HIGH to LOW.
   attachInterrupt(
     digitalPinToInterrupt(BUTTON_PIN),
     buttonInterrupt,
     FALLING
-  );                                      // button interrupt when pressed
+  );
 
   Serial.println("System ready.");
 }
@@ -177,5 +191,6 @@ void loop() {
   checkButton();
   checkTimers();
 
-  delay(50);                              // small delay between checks
+  // Gives the system a short pause between checks.
+  delay(50);
 }
